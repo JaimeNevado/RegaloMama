@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Un Regalo Especial para Paola</title>
+	<style>
+		/* Fuentes y Reset Básico */
+		body,
+		html {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+			overflow: hidden;
+			/* Previene scroll indeseado */
+		}
+
+		/* Fondo con gradiente sutil y animado */
+		body {
+			background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+			background-size: 400% 400%;
+			animation: gradientBG 15s ease infinite;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		/* Animación para el gradiente del fondo */
+		@keyframes gradientBG {
+			0% {
+				background-position: 0% 50%;
+			}
+
+			50% {
+				background-position: 100% 50%;
+			}
+
+			100% {
+				background-position: 0% 50%;
+			}
+		}
+
+		/* --- AÑADIDO: Canvas para el confeti --- */
+		#confetti-canvas {
+			position: fixed;
+			/* Lo fijamos a la pantalla */
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: 9999;
+			/* Por encima de todo */
+			pointer-events: none;
+			/* Para que no interfiera con los clics */
+			display: none;
+			/* Oculto por defecto */
+		}
+
+		/* Contenedor principal con efecto "Frosted Glass" */
+		.container {
+			background-color: rgba(255, 255, 255, 0.8);
+			padding: 35px 30px;
+			border-radius: 18px;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+			text-align: center;
+			max-width: 340px;
+			width: 90%;
+			box-sizing: border-box;
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			position: relative;
+			overflow: hidden;
+			z-index: 1;
+			/* Para que esté por encima del fondo pero debajo del confeti */
+		}
+
+		/* Transición suave entre secciones */
+		#login-section,
+		#content-section {
+			transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+		}
+
+		/* Estilo inicial para la sección de contenido (antes de aparecer) */
+		#content-section {
+			display: none;
+			opacity: 0;
+			transform: translateY(20px);
+		}
+
+		/* Estado visible para la sección de contenido */
+		#content-section.visible {
+			display: block;
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		/* Estado de ocultamiento para la sección de login */
+		#login-section.hiding {
+			opacity: 0;
+			transform: translateY(-20px);
+			pointer-events: none;
+		}
+
+		/* Títulos */
+		h1,
+		h2 {
+			color: #1d1d1f;
+			font-weight: 600;
+			margin-bottom: 25px;
+		}
+
+		h1 {
+			font-size: 1.6em;
+		}
+
+		h2 {
+			font-size: 1.4em;
+		}
+
+		/* Input de contraseña mejorado */
+		#password-input {
+			width: 100%;
+			padding: 14px 18px;
+			margin-bottom: 18px;
+			border: 1px solid #c7c7cc;
+			border-radius: 10px;
+			font-size: 1.1em;
+			box-sizing: border-box;
+			text-align: center;
+			background-color: rgba(255, 255, 255, 0.7);
+			color: #1d1d1f;
+			-webkit-appearance: none;
+			appearance: none;
+			transition: border-color 0.3s ease, box-shadow 0.3s ease;
+		}
+
+		#password-input::placeholder {
+			color: #8e8e93;
+		}
+
+		#password-input:focus {
+			outline: none;
+			border-color: #007aff;
+			box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+		}
+
+		/* Botón de entrada */
+		#submit-button {
+			width: 100%;
+			padding: 14px 18px;
+			background-color: #007aff;
+			color: white;
+			border: none;
+			border-radius: 10px;
+			font-size: 1.1em;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background-color 0.2s ease, transform 0.1s ease;
+			-webkit-appearance: none;
+			appearance: none;
+		}
+
+		#submit-button:hover {
+			background-color: #005ecb;
+		}
+
+		#submit-button:active {
+			transform: scale(0.98);
+			background-color: #004aaa;
+		}
+
+		/* Mensaje de error */
+		#error-message {
+			color: #ff3b30;
+			font-size: 0.9em;
+			margin-top: 15px;
+			min-height: 1.2em;
+			opacity: 0;
+			transition: opacity 0.3s ease;
+			font-weight: 500;
+		}
+
+		#error-message.visible {
+			opacity: 1;
+		}
+
+		/* Imagen del regalo */
+		#gift-image {
+			max-width: 100%;
+			height: auto;
+			border-radius: 12px;
+			margin-top: 15px;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+			transition: transform 0.3s ease;
+		}
+
+		#gift-image:hover {
+			transform: scale(1.03);
+		}
+
+		/* Animación de sacudida */
+		@keyframes shake {
+
+			0%,
+			100% {
+				transform: translateX(0);
+			}
+
+			10%,
+			30%,
+			50%,
+			70%,
+			90% {
+				transform: translateX(-6px);
+			}
+
+			20%,
+			40%,
+			60%,
+			80% {
+				transform: translateX(6px);
+			}
+		}
+
+		.shake-it {
+			animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+		}
+	</style>
+</head>
+
+<body>
+
+	<!-- --- AÑADIDO: Canvas para el confeti --- -->
+	<canvas id="confetti-canvas"></canvas>
+
+	<div class="container" id="main-container">
+		<!-- Sección de Login -->
+		<div id="login-section">
+			<h2>Introduce la contraseña secreta</h2>
+			<input type="password" id="password-input" placeholder="••••••">
+			<button id="submit-button">Entrar</button>
+			<p id="error-message"> </p> <!-- Espacio reservado -->
+		</div>
+
+		<!-- Sección de Contenido (Regalo) -->
+		<div id="content-section">
+			<!-- --- MODIFICADO: Cambié la etiqueta h1 por un h2 para ser más consistente -->
+			<h2>¡Aquí tienes tu querido regalo!</h2>
+			<img id="gift-image" src="terma.png" alt="¡Tu regalo sorpresa!">
+		</div>
+	</div>
+
+	<script>
+		// Referencias a los elementos del DOM
+		const mainContainer = document.getElementById('main-container');
+		const loginSection = document.getElementById('login-section');
+		const contentSection = document.getElementById('content-section');
+		const passwordInput = document.getElementById('password-input');
+		const submitButton = document.getElementById('submit-button');
+		const errorMessage = document.getElementById('error-message');
+
+		// --- AÑADIDO: Referencia al canvas del confeti ---
+		const confettiCanvas = document.getElementById('confetti-canvas');
+		const ctx = confettiCanvas.getContext('2d');
+		let confettiParticles = [];
+
+		// Contraseña correcta
+		const correctPassword = "medio siglo";
+
+		// --- AÑADIDO: Lógica del confeti ---
+		const confettiColors = ['#e73c7e', '#23a6d5', '#23d5ab', '#ee7752', '#f9d423', '#ff4e50'];
+		const numConfetti = 150; // Cantidad de partículas de confeti
+
+		function createConfetti() {
+			confettiParticles = [];
+			for (let i = 0; i < numConfetti; i++) {
+				confettiParticles.push({
+					x: Math.random() * window.innerWidth, // Empieza en un lugar aleatorio del ancho
+					y: -Math.random() * window.innerHeight, // Empieza arriba, fuera de la pantalla
+					size: Math.random() * 8 + 4, // Tamaño entre 4 y 12px
+					color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+					speedY: Math.random() * 3 + 2, // Velocidad de caída
+					speedX: (Math.random() - 0.5) * 4, // Movimiento lateral
+					angle: Math.random() * Math.PI * 2, // Ángulo inicial para la rotación
+					spin: (Math.random() - 0.5) * 0.1, // Velocidad de rotación
+				});
+			}
+		}
+
+		function drawConfetti() {
+			ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+			confettiParticles.forEach(p => {
+				ctx.save();
+				ctx.translate(p.x, p.y);
+				ctx.rotate(p.angle);
+				ctx.fillStyle = p.color;
+				ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+				ctx.restore();
+			});
+		}
+
+		function updateConfetti() {
+			confettiParticles.forEach(p => {
+				p.y += p.speedY;
+				p.x += p.speedX;
+				p.angle += p.spin;
+				// Si la partícula sale por abajo, la reiniciamos arriba
+				if (p.y > confettiCanvas.height) {
+					p.y = -20;
+					p.x = Math.random() * confettiCanvas.width;
+				}
+			});
+		}
+
+		let animationFrameId;
+		function animateConfetti() {
+			updateConfetti();
+			drawConfetti();
+			animationFrameId = requestAnimationFrame(animateConfetti);
+		}
+
+		function startConfetti() {
+			confettiCanvas.width = window.innerWidth;
+			confettiCanvas.height = window.innerHeight;
+			confettiCanvas.style.display = 'block';
+			createConfetti();
+			// Evitar iniciar una nueva animación si ya hay una corriendo
+			if (animationFrameId) cancelAnimationFrame(animationFrameId);
+			animateConfetti();
+
+			// Detener el confeti después de un tiempo para no gastar recursos
+			setTimeout(() => {
+				cancelAnimationFrame(animationFrameId);
+				confettiCanvas.style.display = 'none';
+			}, 7000); // El confeti durará 7 segundos
+		}
+
+
+		// Función para verificar la contraseña
+		function checkPassword() {
+			const enteredPassword = passwordInput.value;
+
+			errorMessage.classList.remove('visible');
+			mainContainer.classList.remove('shake-it');
+			void mainContainer.offsetWidth;
+
+			if (enteredPassword === correctPassword) {
+				// --- MODIFICADO: Iniciar confeti y luego la transición
+				startConfetti(); // ¡Lanzamos el confeti!
+
+				loginSection.classList.add('hiding');
+
+				setTimeout(() => {
+					loginSection.style.display = 'none';
+					contentSection.classList.add('visible');
+					passwordInput.value = '';
+				}, 500);
+
+			} else {
+				errorMessage.textContent = 'Contraseña incorrecta. ¡Inténtalo de nuevo!';
+				errorMessage.classList.add('visible');
+				mainContainer.classList.add('shake-it');
+				passwordInput.value = '';
+				passwordInput.focus();
+			}
+		}
+
+		// Event listener para el botón
+		submitButton.addEventListener('click', checkPassword);
+
+		// Permitir entrar presionando Enter
+		passwordInput.addEventListener('keypress', function (event) {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				checkPassword();
+			}
+			if (errorMessage.classList.contains('visible')) {
+				errorMessage.classList.remove('visible');
+			}
+		});
+
+		// Ocultar mensaje de error si el usuario hace clic en el input
+		passwordInput.addEventListener('focus', function () {
+			if (errorMessage.classList.contains('visible')) {
+				errorMessage.classList.remove('visible');
+			}
+		});
+
+		// --- AÑADIDO: Ajustar el canvas si la ventana cambia de tamaño ---
+		window.addEventListener('resize', () => {
+			if (confettiCanvas.style.display === 'block') {
+				confettiCanvas.width = window.innerWidth;
+				confettiCanvas.height = window.innerHeight;
+			}
+		});
+
+	</script>
+
+</body>
+
+</html>
